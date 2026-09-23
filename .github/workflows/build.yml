@@ -71,6 +71,7 @@ jobs:
 
             # Player message API changed in 26.3.
             $s = [regex]::Replace($s, '(?s)(\w+)\.displayClientMessage\((.+?),\s*(true|false)\);', '$1.sendSystemMessage($2);')
+            $s = $s.Replace('.displayClientMessage(', '.sendSystemMessage(')
 
             # Debug command: permission API changed; keep command operator-neutral for now.
             $s = $s.Replace('.then(Commands.literal("city").requires(s -> s.hasPermission(2)).executes', '.then(Commands.literal("city").executes')
