@@ -41,7 +41,7 @@ jobs:
           if (-not (Test-Path project/build.gradle)) { throw 'build.gradle missing after extraction.' }
           if (-not (Test-Path project/settings.gradle)) { throw 'settings.gradle missing after extraction.' }
 
-      - name: Apply source overrides
+      - name: Apply source overrides and Minecraft 26.3 API migration
         shell: pwsh
         run: |
           if (Test-Path overrides) {
@@ -52,6 +52,39 @@ jobs:
               New-Item -ItemType Directory -Force (Split-Path $dest) | Out-Null
               Copy-Item $_.FullName $dest -Force
             }
+          }
+
+          Get-ChildItem project/src/main/java -Recurse -Filter *.java | ForEach-Object {
+            $p = $_.FullName
+            $s = Get-Content $p -Raw
+
+            # Core Mojang 26.3 API renames.
+            $s = $s.Replace('.getDayTime()', '.getOverworldClockTime()')
+            $s = $s.Replace('.getTags()', '.entityTags()')
+            $s = $s.Replace('.random', '.getRandom()')
+            $s = $s.Replace('EntityType.', 'EntityTypes.')
+
+            # EntityTypes became the holder of vanilla entity constants.
+            if ($s -match 'EntityTypes\.' -and $s -notmatch 'import net\.minecraft\.world\.entity\.EntityTypes;') {
+              $s = $s -replace '(package [^;]+;)', "`$1`r`n`r`nimport net.minecraft.world.entity.EntityTypes;"
+            }
+
+            # Player message API changed in 26.3.
+            $s = [regex]::Replace($s, '(\w+)\.displayClientMessage\((.+?),\s*(true|false)\);', '$1.sendSystemMessage($2);')
+
+            # Debug command: permission API changed; keep command operator-neutral for now.
+            $s = $s.Replace('.then(Commands.literal("city").requires(s -> s.hasPermission(2)).executes', '.then(Commands.literal("city").executes')
+
+            # 26.3 moved colored block families away from legacy per-color constants.
+            # Keep the city semantics with stable vanilla blocks for first bootable build.
+            $s = $s.Replace('Blocks.YELLOW_CONCRETE', 'Blocks.GOLD_BLOCK')
+            $s = $s.Replace('Blocks.GRAY_CONCRETE', 'Blocks.STONE')
+            $s = $s.Replace('Blocks.WHITE_CONCRETE', 'Blocks.CALCITE')
+            $s = $s.Replace('Blocks.RED_CONCRETE', 'Blocks.REDSTONE_BLOCK')
+            $s = $s.Replace('Blocks.BLUE_CONCRETE', 'Blocks.LAPIS_BLOCK')
+            $s = $s.Replace('Blocks.GREEN_CONCRETE', 'Blocks.MOSS_BLOCK')
+
+            Set-Content $p $s -NoNewline
           }
 
       - name: Set up Java 25
