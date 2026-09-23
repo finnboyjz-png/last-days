@@ -17,87 +17,39 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Recover complete source tree from bundle
+      - name: Reassemble and verify source bundle
         shell: pwsh
         run: |
-          $parts = 1..9 | ForEach-Object { "source.b64.{0:D2}" -f $_ }
-          foreach ($part in $parts) {
-            if (-not (Test-Path $part)) { throw "Missing bundle part: $part" }
-          }
+          $parts = @(
+            'source.b64.01','source.b64.02','source.b64.03','source.b64.04','source.b64.05','source.b64.06',
+            'source.b64.07a','source.b64.07b','source.b64.08',
+            'source.b64.09a','source.b64.09b1','source.b64.09b2',
+            'source.b64.10a','source.b64.10b1','source.b64.10b2'
+          )
+          foreach ($part in $parts) { if (-not (Test-Path $part)) { throw "Missing $part" } }
           $b64 = ($parts | ForEach-Object { Get-Content $_ -Raw }) -join ''
-          [IO.File]::WriteAllBytes('LAST_DAYS_SOURCE.partial.zip', [Convert]::FromBase64String($b64))
+          [IO.File]::WriteAllBytes('LAST_DAYS_SOURCE.zip', [Convert]::FromBase64String($b64))
+          $hash = (Get-FileHash LAST_DAYS_SOURCE.zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne 'b7e220af9db60dc33018536d73be9fa282163693e53c5d2d90c351aff10c3c74') {
+            throw "Source ZIP hash mismatch: $hash"
+          }
+          New-Item -ItemType Directory -Force project | Out-Null
+          Expand-Archive LAST_DAYS_SOURCE.zip -DestinationPath project -Force
+          if (-not (Test-Path project/build.gradle)) { throw 'build.gradle missing after extraction.' }
+          if (-not (Test-Path project/settings.gradle)) { throw 'settings.gradle missing after extraction.' }
 
-          @'
-          import pathlib, struct, zlib, binascii
-
-          src = pathlib.Path("LAST_DAYS_SOURCE.partial.zip").read_bytes()
-          root = pathlib.Path("project")
-          root.mkdir(exist_ok=True)
-
-          LOCAL = b"PK\x03\x04"
-          pos = 0
-          count = 0
-
-          while pos + 30 <= len(src):
-              if src[pos:pos+4] != LOCAL:
-                  break
-
-              sig, ver, flags, method, mtime, mdate, crc, csize, usize, fnlen, exlen = struct.unpack_from(
-                  "<4s5H3I2H", src, pos
-              )
-              if flags & 0x08:
-                  raise RuntimeError("Unsupported data-descriptor ZIP entry")
-
-              name_start = pos + 30
-              name_end = name_start + fnlen
-              data_start = name_end + exlen
-              data_end = data_start + csize
-              if data_end > len(src):
-                  raise RuntimeError("Truncated file payload before central directory")
-
-              raw_name = src[name_start:name_end]
-              name = raw_name.decode("utf-8" if flags & 0x800 else "cp437")
-              target = (root / name).resolve()
-              root_resolved = root.resolve()
-              if root_resolved not in target.parents and target != root_resolved:
-                  raise RuntimeError(f"Unsafe path in bundle: {name}")
-
-              if name.endswith("/"):
-                  target.mkdir(parents=True, exist_ok=True)
-              else:
-                  payload = src[data_start:data_end]
-                  if method == 0:
-                      data = payload
-                  elif method == 8:
-                      data = zlib.decompress(payload, -15)
-                  else:
-                      raise RuntimeError(f"Unsupported compression method {method} for {name}")
-
-                  if len(data) != usize:
-                      raise RuntimeError(f"Size mismatch for {name}")
-                  if (binascii.crc32(data) & 0xffffffff) != crc:
-                      raise RuntimeError(f"CRC mismatch for {name}")
-
-                  target.parent.mkdir(parents=True, exist_ok=True)
-                  target.write_bytes(data)
-
-              count += 1
-              pos = data_end
-
-          print(f"Recovered {count} ZIP entries; local-file stream ended at byte {pos}.")
-          required = [
-              root / "build.gradle",
-              root / "settings.gradle",
-              root / "src/main/java/de/janzimmermann/lastdays/LastDays.java",
-              root / "src/main/resources/META-INF/mods.toml",
-              root / "installer/LastDays.iss",
-          ]
-          missing = [str(p) for p in required if not p.exists()]
-          if missing:
-              raise RuntimeError("Recovered source is incomplete: " + ", ".join(missing))
-          if count < 100:
-              raise RuntimeError(f"Expected at least 100 recovered entries, got {count}")
-          '@ | python -
+      - name: Apply source overrides
+        shell: pwsh
+        run: |
+          if (Test-Path overrides) {
+            $base = (Resolve-Path overrides).Path
+            Get-ChildItem overrides -Recurse -File | ForEach-Object {
+              $rel = $_.FullName.Substring($base.Length + 1)
+              $dest = Join-Path project $rel
+              New-Item -ItemType Directory -Force (Split-Path $dest) | Out-Null
+              Copy-Item $_.FullName $dest -Force
+            }
+          }
 
       - name: Set up Java 25
         uses: actions/setup-java@v4
