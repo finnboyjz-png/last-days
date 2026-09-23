@@ -88,6 +88,33 @@ jobs:
             Set-Content $p $s -NoNewline
           }
 
+      - name: Import CC0 gun visuals
+        shell: pwsh
+        run: |
+          $dest = 'project/src/main/resources/assets/lastdays/textures/item'
+          New-Item -ItemType Directory -Force $dest | Out-Null
+          $base = 'https://raw.githubusercontent.com/goldbocman/bren_port/main/src/main/resources/assets/vgm/textures/item'
+          $map = @{
+            'pistol.png'       = 'revolver.png'
+            'pistol_gui.png'   = 'revolver.png'
+            'smg.png'          = 'auto_pistol.png'
+            'smg_gui.png'      = 'auto_pistol.png'
+            'm4a1.png'         = 'auto_gun.png'
+            'm4a1_gui.png'     = 'auto_gun_gui.png'
+            'shotgun.png'      = 'shotgun.png'
+            'shotgun_gui.png'  = 'shotgun_gui.png'
+            'sniper.png'       = 'rifle.png'
+            'sniper_gui.png'   = 'rifle_gui.png'
+            'rifle_ammo.png'   = 'bullet.png'
+            'pistol_ammo.png'  = 'magnum_bullet.png'
+            'shells.png'       = 'shell.png'
+            'sniper_ammo.png'  = 'magnum_bullet.png'
+          }
+          foreach ($target in $map.Keys) {
+            Invoke-WebRequest -UseBasicParsing -Uri "$base/$($map[$target])" -OutFile (Join-Path $dest $target)
+          }
+          Write-Host "Imported CC0 weapon textures from goldbocman/bren_port."
+
       - name: SAFE BOOT - remove optional datapack resources
         shell: pwsh
         run: |
