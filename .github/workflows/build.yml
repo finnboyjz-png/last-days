@@ -20,9 +20,9 @@ jobs:
       - name: Reassemble source bundle
         shell: pwsh
         run: |
-          $parts = Get-ChildItem source.b64.* | Sort-Object Name
-          if (-not $parts) { throw 'Source bundle parts not found.' }
-          $b64 = ($parts | ForEach-Object { Get-Content $_.FullName -Raw }) -join ''
+          $parts = 1..10 | ForEach-Object { ('source.b64.{0:D2}' -f $_) }
+          foreach ($part in $parts) { if (-not (Test-Path $part)) { throw "Missing $part" } }
+          $b64 = ($parts | ForEach-Object { Get-Content $_ -Raw }) -join ''
           [IO.File]::WriteAllBytes('LAST_DAYS_SOURCE.zip', [Convert]::FromBase64String($b64))
           New-Item -ItemType Directory -Force project | Out-Null
           Expand-Archive LAST_DAYS_SOURCE.zip -DestinationPath project -Force
