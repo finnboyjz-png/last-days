@@ -1,0 +1,92 @@
+name: Build LAST DAYS AAA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Reassemble source bundle
+        shell: pwsh
+        run: |
+          $parts = Get-ChildItem source.b64.* | Sort-Object Name
+          if (-not $parts) { throw 'Source bundle parts not found.' }
+          $b64 = ($parts | ForEach-Object { Get-Content $_.FullName -Raw }) -join ''
+          [IO.File]::WriteAllBytes('LAST_DAYS_SOURCE.zip', [Convert]::FromBase64String($b64))
+          New-Item -ItemType Directory -Force project | Out-Null
+          Expand-Archive LAST_DAYS_SOURCE.zip -DestinationPath project -Force
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Download official Forge MDK wrapper
+        shell: pwsh
+        run: |
+          $url = 'https://maven.minecraftforge.net/net/minecraftforge/forge/26.3-66.0.2/forge-26.3-66.0.2-mdk.zip'
+          Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile forge-mdk.zip
+          Expand-Archive forge-mdk.zip -DestinationPath forge-mdk -Force
+          Copy-Item forge-mdk/gradlew project/ -Force
+          Copy-Item forge-mdk/gradlew.bat project/ -Force
+          Copy-Item forge-mdk/gradle project/ -Recurse -Force
+
+      - name: Verify toolchain
+        shell: pwsh
+        working-directory: project
+        run: |
+          java -version
+          .\gradlew.bat --version
+
+      - name: Build Forge mod
+        shell: pwsh
+        working-directory: project
+        run: |
+          .\gradlew.bat --no-daemon clean build --stacktrace 2>&1 | Tee-Object -FilePath build-output.log
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Stage mod JAR
+        shell: pwsh
+        working-directory: project
+        run: |
+          New-Item -ItemType Directory -Force installer/payload | Out-Null
+          $jar = Get-ChildItem build/libs/*.jar | Where-Object { $_.Name -notmatch 'sources|javadoc' } | Select-Object -First 1
+          if (-not $jar) { throw 'Compiled mod JAR not found.' }
+          Copy-Item $jar.FullName installer/payload/lastdays-1.0.0-aaa.jar -Force
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+
+      - name: Build Windows installer
+        shell: pwsh
+        working-directory: project
+        run: |
+          $iscc = 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+          if (-not (Test-Path $iscc)) { throw 'Inno Setup compiler not found.' }
+          & $iscc installer/LastDays.iss
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with exit code $LASTEXITCODE" }
+
+      - name: Upload finished build
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: LAST-DAYS-AAA-Windows
+          if-no-files-found: warn
+          retention-days: 30
+          path: |
+            project/installer/output/LAST_DAYS_Setup.exe
+            project/installer/payload/lastdays-1.0.0-aaa.jar
+            project/build-output.log
