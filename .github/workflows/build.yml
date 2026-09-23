@@ -88,6 +88,17 @@ jobs:
             Set-Content $p $s -NoNewline
           }
 
+      - name: SAFE BOOT - remove optional datapack resources
+        shell: pwsh
+        run: |
+          if (Test-Path project/src/main/resources/data/lastdays) {
+            Remove-Item project/src/main/resources/data/lastdays -Recurse -Force
+          }
+          if (Test-Path project/src/generated/resources/data/lastdays) {
+            Remove-Item project/src/generated/resources/data/lastdays -Recurse -Force
+          }
+          Write-Host "SAFE BOOT: custom recipes/loot/datapack resources removed for world-menu isolation."
+
       - name: Set up Java 25
         uses: actions/setup-java@v4
         with:
