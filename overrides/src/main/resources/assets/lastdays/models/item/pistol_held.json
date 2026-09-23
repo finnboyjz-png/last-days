@@ -1,0 +1,6 @@
+{
+  "parent": "lastdays:item/pistol_held_base",
+  "textures": {
+    "layer0": "lastdays:item/pistol"
+  }
+}

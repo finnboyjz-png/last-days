@@ -1,0 +1,74 @@
+{
+  "credit": "Adapted from CC0 bren_port / Vanilla Gun Mod",
+  "parent": "minecraft:item/generated",
+  "display": {
+    "thirdperson_righthand": {
+      "rotation": [
+        -40,
+        -90,
+        -12
+      ],
+      "translation": [
+        0.5,
+        -1,
+        -1.5
+      ],
+      "scale": [
+        1.35,
+        1.35,
+        0.75
+      ]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [
+        40,
+        90,
+        12
+      ],
+      "translation": [
+        0.5,
+        -1,
+        -1.5
+      ],
+      "scale": [
+        1.35,
+        1.35,
+        0.75
+      ]
+    },
+    "firstperson_righthand": {
+      "rotation": [
+        -22,
+        -90,
+        0
+      ],
+      "translation": [
+        0.83,
+        3.2,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        0.6
+      ]
+    },
+    "firstperson_lefthand": {
+      "rotation": [
+        22,
+        90,
+        0
+      ],
+      "translation": [
+        0.83,
+        3.2,
+        1
+      ],
+      "scale": [
+        1,
+        1,
+        0.6
+      ]
+    }
+  }
+}
