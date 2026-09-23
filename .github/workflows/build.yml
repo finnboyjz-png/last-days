@@ -27,7 +27,7 @@ jobs:
             'source.b64.01','source.b64.02','source.b64.03','source.b64.04','source.b64.05','source.b64.06',
             'source.b64.07a','source.b64.07b','source.b64.08',
             'source.b64.09a','source.b64.09b1','source.b64.09b2',
-            'source.b64.10a','source.b64.10b0','source.b64.10b1','source.b64.10b2'
+            'source.b64.10a0','source.b64.10a1a','source.b64.10a1b','source.b64.10a2','source.b64.10b0','source.b64.10b1','source.b64.10b2'
           )
           foreach ($part in $parts) { if (-not (Test-Path $part)) { throw "Missing $part" } }
           $b64 = ($parts | ForEach-Object { Get-Content $_ -Raw }) -join ''
