@@ -117,7 +117,7 @@ jobs:
           $map3d = @{
             'm4a1_3d.png' = 'auto_gun_3d.png'
             'shotgun_3d.png' = 'shotgun_3d.png'
-            'sniper_3d.png' = 'rifle_3d.png'
+            'sniper_3d.png' = 'boltactionrifle.png'
           }
           foreach ($target in $map3d.Keys) {
             Invoke-WebRequest -UseBasicParsing -Uri "$base3d/$($map3d[$target])" -OutFile (Join-Path $dest $target)
