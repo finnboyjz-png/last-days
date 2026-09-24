@@ -70,8 +70,8 @@ public final class ProjectileSystem {
         Iterator<Shot> it = SHOTS.iterator();
         while (it.hasNext()) {
             Shot shot = it.next();
-            ServerPlayer owner = level.getPlayerByUUID(shot.owner);
-            if (owner == null || shot.life-- <= 0) {
+            var foundOwner = level.getPlayerByUUID(shot.owner);
+            if (!(foundOwner instanceof ServerPlayer owner) || shot.life-- <= 0) {
                 it.remove();
                 continue;
             }
@@ -133,8 +133,7 @@ public final class ProjectileSystem {
                 level.playSound(null, pos, state.getSoundType().getBreakSound(),
                         SoundSource.BLOCKS, 0.22F, 1.7F + level.getRandom().nextFloat() * 0.4F);
 
-                if (state.is(Blocks.GLASS) || state.is(Blocks.GLASS_PANE)
-                        || state.is(Blocks.WHITE_STAINED_GLASS) || state.is(Blocks.LIGHT_BLUE_STAINED_GLASS)) {
+                if (state.is(Blocks.GLASS) || state.is(Blocks.GLASS_PANE) || state.is(Blocks.TINTED_GLASS)) {
                     level.destroyBlock(pos, false, owner);
                 }
                 it.remove();
