@@ -113,7 +113,16 @@ jobs:
           foreach ($target in $map.Keys) {
             Invoke-WebRequest -UseBasicParsing -Uri "$base/$($map[$target])" -OutFile (Join-Path $dest $target)
           }
-          Write-Host "Imported CC0 weapon textures from goldbocman/bren_port."
+          $base3d = 'https://raw.githubusercontent.com/goldbocman/bren_port/main/src/main/resources/resourcepacks/bren_3d_resources/assets/bren/textures/item'
+          $map3d = @{
+            'm4a1_3d.png' = 'auto_gun_3d.png'
+            'shotgun_3d.png' = 'shotgun_3d.png'
+            'sniper_3d.png' = 'rifle_3d.png'
+          }
+          foreach ($target in $map3d.Keys) {
+            Invoke-WebRequest -UseBasicParsing -Uri "$base3d/$($map3d[$target])" -OutFile (Join-Path $dest $target)
+          }
+          Write-Host "Imported CC0 2D + 3D weapon assets from goldbocman/bren_port."
 
       - name: SAFE BOOT - remove optional datapack resources
         shell: pwsh
