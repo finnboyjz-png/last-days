@@ -58,8 +58,8 @@ public final class GunItem extends Item {
         player.getCooldowns().addCooldown(gun, cooldownTicks);
         NoiseSystem.addNoise(sp, shotgun ? 11 : sniper ? 9 : smg ? 7 : 6);
 
-        server.playSound(null, player.blockPosition(),
-                shotgun ? SoundEvents.GENERIC_EXPLODE : SoundEvents.CROSSBOW_SHOOT,
+        var shotSound = shotgun ? SoundEvents.GENERIC_EXPLODE.value() : SoundEvents.CROSSBOW_SHOOT.value();
+        server.playSound(null, player.blockPosition(), shotSound,
                 SoundSource.PLAYERS, shotgun ? 0.55F : 0.85F, shotgun ? 1.35F : 0.78F);
 
         Vec3 look = player.getLookAngle();
