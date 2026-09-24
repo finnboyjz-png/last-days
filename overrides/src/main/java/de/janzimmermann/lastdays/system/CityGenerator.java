@@ -151,14 +151,14 @@ public final class CityGenerator {
 
         switch (lot.kind()) {
             case HOSPITAL -> buildBuilding(level, c, 7, 5, 4,
-                    Blocks.WHITE_CONCRETE, Blocks.SMOOTH_STONE, Blocks.LIGHT_BLUE_STAINED_GLASS,
+                    Blocks.WHITE_CONCRETE, Blocks.SMOOTH_STONE, Blocks.GLASS,
                     true, Loot.MEDICAL, lot.seed());
             case POLICE -> buildBuilding(level, c, 6, 5, 3,
-                    Blocks.GRAY_CONCRETE, Blocks.DEEPSLATE_TILES, Blocks.BLUE_STAINED_GLASS,
+                    Blocks.GRAY_CONCRETE, Blocks.DEEPSLATE_TILES, Blocks.TINTED_GLASS,
                     false, Loot.POLICE, lot.seed());
             case MILITARY -> {
                 buildBuilding(level, c, 7, 6, 2,
-                        Blocks.GREEN_TERRACOTTA, Blocks.POLISHED_DEEPSLATE, Blocks.TINTED_GLASS,
+                        Blocks.MOSS_BLOCK, Blocks.POLISHED_DEEPSLATE, Blocks.TINTED_GLASS,
                         false, Loot.MILITARY, lot.seed());
                 fenceCompound(level, c, 9);
             }
@@ -166,10 +166,10 @@ public final class CityGenerator {
             case GAS -> buildGasStation(level, c, lot.seed());
             case PARKING -> buildParking(level, c, lot.seed());
             case SHOP -> buildBuilding(level, c, 6, 5, 1 + lot.seed() % 2,
-                    Blocks.WHITE_TERRACOTTA, Blocks.SMOOTH_STONE, Blocks.GLASS,
+                    Blocks.CALCITE, Blocks.SMOOTH_STONE, Blocks.GLASS,
                     false, Loot.SHOP, lot.seed());
             case OFFICE -> buildBuilding(level, c, 6, 6, 3 + lot.seed() % 5,
-                    Blocks.POLISHED_DEEPSLATE, Blocks.SMOOTH_STONE, Blocks.LIGHT_BLUE_STAINED_GLASS,
+                    Blocks.POLISHED_DEEPSLATE, Blocks.SMOOTH_STONE, Blocks.GLASS,
                     false, Loot.OFFICE, lot.seed());
             case RUIN -> {
                 buildBuilding(level, c, 6, 6, 2 + lot.seed() % 4,
@@ -304,9 +304,9 @@ public final class CityGenerator {
             for(int z=-6;z<=6;z+=6){
                 level.setBlockAndUpdate(c.offset(x,0,z), Blocks.IRON_BLOCK.defaultBlockState());
                 level.setBlockAndUpdate(c.offset(x+1,0,z), Blocks.IRON_BLOCK.defaultBlockState());
-                level.setBlockAndUpdate(c.offset(x,1,z), Blocks.BLACK_STAINED_GLASS.defaultBlockState());
-                level.setBlockAndUpdate(c.offset(x-1,-1,z), Blocks.BLACK_CONCRETE.defaultBlockState());
-                level.setBlockAndUpdate(c.offset(x+2,-1,z), Blocks.BLACK_CONCRETE.defaultBlockState());
+                level.setBlockAndUpdate(c.offset(x,1,z), Blocks.TINTED_GLASS.defaultBlockState());
+                level.setBlockAndUpdate(c.offset(x-1,-1,z), Blocks.DEEPSLATE_TILES.defaultBlockState());
+                level.setBlockAndUpdate(c.offset(x+2,-1,z), Blocks.DEEPSLATE_TILES.defaultBlockState());
             }
         }
     }
