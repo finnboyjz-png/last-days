@@ -78,6 +78,7 @@ public final class CommonEvents {
         ServerLevel overworld = server.getLevel(Level.OVERWORLD);
         if (overworld == null) return;
 
+        ProjectileSystem.tick(overworld);
         HordeDirector.tick(server);
         DefenseSystem.tick(overworld);
 

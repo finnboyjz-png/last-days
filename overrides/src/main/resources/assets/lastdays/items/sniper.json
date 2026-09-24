@@ -17,7 +17,7 @@
     ],
     "fallback": {
       "type": "minecraft:model",
-      "model": "lastdays:item/sniper_held"
+      "model": "lastdays:item/sniper_3d"
     }
   }
 }

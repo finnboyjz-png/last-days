@@ -17,7 +17,7 @@
     ],
     "fallback": {
       "type": "minecraft:model",
-      "model": "lastdays:item/shotgun_held"
+      "model": "lastdays:item/shotgun_3d"
     }
   }
 }

@@ -17,7 +17,7 @@
     ],
     "fallback": {
       "type": "minecraft:model",
-      "model": "lastdays:item/m4a1_held"
+      "model": "lastdays:item/m4a1_3d"
     }
   }
 }
