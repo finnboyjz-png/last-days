@@ -74,13 +74,13 @@ jobs:
               $versions = @(Invoke-RestMethod -UseBasicParsing -Uri $url -Headers @{ 'User-Agent' = 'LAST-DAYS-Modpack/1.0' })
             } catch {
               if ($spec.required) { throw "Required mod $project could not be resolved: $($_.Exception.Message)" }
-              Write-Warning "Skipping optional mod $project: API lookup failed."
+              Write-Warning "Skipping optional mod ${project}: API lookup failed."
               continue
             }
 
             if (-not $versions -or $versions.Count -eq 0) {
               if ($spec.required) { throw "Required mod $project has no Forge 26.3 build." }
-              Write-Warning "Skipping optional mod $project: no Forge 26.3 build."
+              Write-Warning "Skipping optional mod ${project}: no Forge 26.3 build."
               continue
             }
 
@@ -91,7 +91,7 @@ jobs:
             if (-not $file) { $file = $chosen.files | Select-Object -First 1 }
             if (-not $file) {
               if ($spec.required) { throw "Required mod $project resolved but has no downloadable file." }
-              Write-Warning "Skipping optional mod $project: no file."
+              Write-Warning "Skipping optional mod ${project}: no file."
               continue
             }
 
