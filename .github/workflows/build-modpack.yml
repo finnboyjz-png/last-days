@@ -1,0 +1,149 @@
+name: Build LAST DAYS Modpack
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - modpack-1.0
+    paths:
+      - 'modpack/**'
+      - '.github/workflows/build-modpack.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build-modpack:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve latest successful LAST DAYS mod build
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $runId = gh run list --workflow build.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId'
+          if (-not $runId) { throw 'No successful LAST DAYS core build found.' }
+          Write-Host "Using core build run $runId"
+          New-Item -ItemType Directory -Force core-build | Out-Null
+          gh run download $runId -n LAST-DAYS-AAA-Windows -D core-build
+          $jar = Get-ChildItem core-build -Recurse -Filter 'lastdays-*.jar' | Select-Object -First 1
+          if (-not $jar) { throw 'LAST DAYS jar missing from successful build artifact.' }
+          "CORE_JAR=$($jar.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          "CORE_RUN=$runId" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+
+      - name: Build Modrinth pack
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $pack = Join-Path $PWD 'pack'
+          $overrides = Join-Path $pack 'overrides'
+          $modsDir = Join-Path $overrides 'mods'
+          New-Item -ItemType Directory -Force $modsDir | Out-Null
+
+          # Our own mod is the only jar physically shipped in overrides.
+          Copy-Item $env:CORE_JAR (Join-Path $modsDir 'lastdays-1.2-core.jar') -Force
+
+          if (Test-Path 'modpack/overrides') {
+            Copy-Item 'modpack/overrides/*' $overrides -Recurse -Force
+          }
+
+          $specs = Get-Content 'modpack/mods.json' -Raw | ConvertFrom-Json
+          $files = @()
+          $lockLines = @(
+            'LAST DAYS modpack resolved dependency lock',
+            "Minecraft: 26.3",
+            "Forge: 66.0.2",
+            "LAST DAYS core run: $env:CORE_RUN",
+            ''
+          )
+
+          $loaderParam = [uri]::EscapeDataString('["forge"]')
+          $gameParam = [uri]::EscapeDataString('["26.3"]')
+
+          foreach ($spec in $specs) {
+            $project = [string]$spec.project
+            $url = "https://api.modrinth.com/v2/project/$project/version?loaders=$loaderParam&game_versions=$gameParam"
+            Write-Host "Resolving $project ..."
+            try {
+              $versions = @(Invoke-RestMethod -UseBasicParsing -Uri $url -Headers @{ 'User-Agent' = 'LAST-DAYS-Modpack/1.0' })
+            } catch {
+              if ($spec.required) { throw "Required mod $project could not be resolved: $($_.Exception.Message)" }
+              Write-Warning "Skipping optional mod $project: API lookup failed."
+              continue
+            }
+
+            if (-not $versions -or $versions.Count -eq 0) {
+              if ($spec.required) { throw "Required mod $project has no Forge 26.3 build." }
+              Write-Warning "Skipping optional mod $project: no Forge 26.3 build."
+              continue
+            }
+
+            $chosen = $versions | Where-Object { $_.version_type -eq 'release' } | Select-Object -First 1
+            if (-not $chosen) { $chosen = $versions | Select-Object -First 1 }
+
+            $file = $chosen.files | Where-Object { $_.primary -eq $true } | Select-Object -First 1
+            if (-not $file) { $file = $chosen.files | Select-Object -First 1 }
+            if (-not $file) {
+              if ($spec.required) { throw "Required mod $project resolved but has no downloadable file." }
+              Write-Warning "Skipping optional mod $project: no file."
+              continue
+            }
+
+            $client = if ($spec.side -eq 'server') { 'unsupported' } else { 'required' }
+            $server = if ($spec.side -eq 'client') { 'unsupported' } else { 'required' }
+
+            $files += [ordered]@{
+              path = "mods/$($file.filename)"
+              hashes = [ordered]@{
+                sha1 = [string]$file.hashes.sha1
+                sha512 = [string]$file.hashes.sha512
+              }
+              env = [ordered]@{
+                client = $client
+                server = $server
+              }
+              downloads = @([string]$file.url)
+              fileSize = [int64]$file.size
+            }
+
+            $lockLines += "$project | $($chosen.name) | versionId=$($chosen.id) | file=$($file.filename)"
+          }
+
+          $index = [ordered]@{
+            formatVersion = 1
+            game = 'minecraft'
+            versionId = '1.0.0-alpha'
+            name = 'LAST DAYS'
+            summary = 'Hardcore zombie survival built around the LAST DAYS Forge mod.'
+            files = $files
+            dependencies = [ordered]@{
+              minecraft = '26.3'
+              forge = '66.0.2'
+            }
+          }
+
+          $index | ConvertTo-Json -Depth 20 | Set-Content (Join-Path $pack 'modrinth.index.json') -Encoding utf8
+          $lockLines | Set-Content (Join-Path $overrides 'LAST_DAYS_MODLIST.txt') -Encoding utf8
+          Copy-Item 'modpack/README.md' (Join-Path $overrides 'README_LAST_DAYS.txt') -Force
+          Copy-Item 'modpack/THIRD_PARTY.md' (Join-Path $overrides 'THIRD_PARTY_MODPACK.txt') -Force
+
+          $out = Join-Path $PWD 'LAST_DAYS-1.0.0-alpha.mrpack'
+          if (Test-Path $out) { Remove-Item $out -Force }
+          Compress-Archive -Path (Join-Path $pack '*') -DestinationPath $out -CompressionLevel Optimal
+
+          Write-Host "Built $out"
+          Get-Item $out | Format-List Name,Length,FullName
+
+      - name: Upload Modpack
+        uses: actions/upload-artifact@v4
+        with:
+          name: LAST-DAYS-Modpack
+          path: LAST_DAYS-1.0.0-alpha.mrpack
+          if-no-files-found: error
+          retention-days: 30

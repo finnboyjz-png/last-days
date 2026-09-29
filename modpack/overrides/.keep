@@ -1,0 +1,3 @@
+LAST DAYS pack overrides
+
+This folder is intentionally small. Third-party mods are referenced through modrinth.index.json by the build workflow rather than copied here.

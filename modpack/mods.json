@@ -1,0 +1,56 @@
+[
+  {
+    "project": "xaeros-minimap",
+    "side": "client",
+    "required": true,
+    "reason": "Minimap, waypoints and navigation"
+  },
+  {
+    "project": "xaeros-world-map",
+    "side": "client",
+    "required": true,
+    "reason": "Full-screen explored-world map"
+  },
+  {
+    "project": "mouse-tweaks",
+    "side": "client",
+    "required": true,
+    "reason": "Faster inventory handling"
+  },
+  {
+    "project": "sound-physics-remastered",
+    "side": "client",
+    "required": true,
+    "reason": "Occlusion and reverb for gunshots/interiors"
+  },
+  {
+    "project": "ambientsounds",
+    "side": "client",
+    "required": false,
+    "reason": "Atmospheric environmental audio"
+  },
+  {
+    "project": "appleskin",
+    "side": "both",
+    "required": false,
+    "reason": "Readable hunger/saturation HUD"
+  },
+  {
+    "project": "jade",
+    "side": "both",
+    "required": false,
+    "reason": "Context HUD for blocks and containers"
+  },
+  {
+    "project": "clumps",
+    "side": "server",
+    "required": false,
+    "reason": "XP orb performance optimization"
+  },
+  {
+    "project": "cloth-config",
+    "side": "client",
+    "required": false,
+    "reason": "Config UI support for client mods"
+  }
+]
