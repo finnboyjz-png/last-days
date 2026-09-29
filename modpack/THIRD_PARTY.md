@@ -11,6 +11,8 @@ Selected projects:
 - Jade — CC-BY-NC-SA-4.0.
 - Clumps — MIT.
 - Cloth Config API — LGPL-3.0-only.
+- Zombie Break & Build — LGPL-3.0-only.
+- Simple Voice Chat — referenced through Modrinth; project licensing/pack terms remain with the author.
 
 LAST DAYS source/assets continue to carry the separate third-party notices already present in the repository.
 
