@@ -52,5 +52,17 @@
     "side": "client",
     "required": false,
     "reason": "Config UI support for client mods"
+  },
+  {
+    "project": "zombies-break-and-build",
+    "side": "both",
+    "required": true,
+    "reason": "Delegates zombie block breaking/bridging to an existing maintained Forge system"
+  },
+  {
+    "project": "simple-voice-chat",
+    "side": "both",
+    "required": false,
+    "reason": "Proximity voice for co-op; integrates with Sound Physics Remastered"
   }
 ]
